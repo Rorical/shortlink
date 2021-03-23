@@ -121,6 +121,38 @@ func (self *Server) Init() {
 			gin.H{"url": url},
 		))
 	})
+
+	self.InitPages()
+}
+
+func (self *Server) InitPages() {
+	self.router.LoadHTMLGlob("internal/pages/*")
+	self.router.GET("/redirect/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		url, err := self.api.GetLink(id)
+		if err != nil {
+			if err == shortlink.ErrIllegalParameters {
+				c.HTML(400, "error.tmpl", gin.H{
+					"error":  -1,
+					"detail": "Error Illegal Parameters",
+				})
+			} else if err == shortlink.ErrDoesNotExists {
+				c.HTML(404, "error.tmpl", gin.H{
+					"error":  2,
+					"detail": "Error Record Not Found",
+				})
+			} else {
+				c.HTML(500, "error.tmpl", gin.H{
+					"error":  500,
+					"detail": "Unknown Error Please Contact With Administrator",
+				})
+			}
+			return
+		}
+		c.HTML(200, "redirect.tmpl", gin.H{
+			"URL": url,
+		})
+	})
 }
 
 func (self *Server) Run() {
