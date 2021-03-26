@@ -10,8 +10,15 @@ import (
 type LevelGoSetting struct {
 	URI string
 }
+
+type GeetestSetting struct {
+	GEETEST_ID  string
+	GEETEST_KEY string
+}
+
 type Setting struct {
 	LevelGo LevelGoSetting
+	Geetest GeetestSetting
 }
 
 func Read() *Setting {

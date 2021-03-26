@@ -3,7 +3,7 @@ package shortlink
 import (
 	"shortlink/internal/config"
 	"shortlink/internal/levelgo"
-	"shortlink/internal/res"
+	"shortlink/internal/regex"
 )
 
 type ShortLinkApi struct {
@@ -20,7 +20,7 @@ func NewApi(conf *config.Setting) *ShortLinkApi {
 }
 
 func (self *ShortLinkApi) SetLink(id string, link string) error {
-	if res.IsProperId(id) && res.IsUrl(link) {
+	if regex.IsProperId(id) && regex.IsUrl(link) {
 		idbytes := config.StringIn(id)
 		linkbytes := config.StringIn(link)
 		isexist, err := self.db.Has(idbytes)
@@ -37,7 +37,7 @@ func (self *ShortLinkApi) SetLink(id string, link string) error {
 }
 
 func (self *ShortLinkApi) GetLink(id string) (string, error) {
-	if res.IsProperId(id) {
+	if regex.IsProperId(id) {
 		idbytes := config.StringIn(id)
 		link, err := self.db.Get(idbytes)
 		if err != nil {
@@ -52,7 +52,7 @@ func (self *ShortLinkApi) GetLink(id string) (string, error) {
 }
 
 func (self *ShortLinkApi) IsLinkExist(id string) (bool, error) {
-	if res.IsProperId(id) {
+	if regex.IsProperId(id) {
 		idbytes := config.StringIn(id)
 		isexist, err := self.db.Has(idbytes)
 		if isexist {

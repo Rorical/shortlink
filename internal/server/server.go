@@ -2,23 +2,27 @@ package server
 
 import (
 	"shortlink/internal/config"
+	"shortlink/internal/geetest"
 	"shortlink/internal/shortlink"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	router *gin.Engine
-	api    *shortlink.ShortLinkApi
+	router  *gin.Engine
+	api     *shortlink.ShortLinkApi
+	captcha *geetest.GeetestApi
 }
 
 func NewServer() *Server {
 	router := gin.Default()
 	conf := config.Read()
 	api := shortlink.NewApi(conf)
+	geetest := geetest.NewGeetestApi(conf)
 	return &Server{
-		router: router,
-		api:    api,
+		router:  router,
+		api:     api,
+		captcha: geetest,
 	}
 }
 
@@ -123,6 +127,8 @@ func (self *Server) Init() {
 	})
 
 	self.InitPages()
+	self.router.GET("/geetest/register", self.captcha.FirstRegister)
+	self.router.POST("/geetest/validate", self.captcha.SecondValidate)
 }
 
 func (self *Server) InitPages() {
