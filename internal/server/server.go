@@ -2,8 +2,9 @@ package server
 
 import (
 	"shortlink/internal/config"
-	"shortlink/internal/geetest"
 	"shortlink/internal/shortlink"
+
+	"shortlink/internal/hcaptcha"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,18 +12,18 @@ import (
 type Server struct {
 	router  *gin.Engine
 	api     *shortlink.ShortLinkApi
-	captcha *geetest.GeetestApi
+	captcha *hcaptcha.HCaptcha
 }
 
 func NewServer() *Server {
 	router := gin.Default()
 	conf := config.Read()
 	api := shortlink.NewApi(conf)
-	geetest := geetest.NewGeetestApi(conf)
+	hcaptcha := hcaptcha.NewhCaptcha(conf)
 	return &Server{
 		router:  router,
 		api:     api,
-		captcha: geetest,
+		captcha: hcaptcha,
 	}
 }
 
@@ -35,37 +36,47 @@ func makeJsonResponse(code int, message string, data map[string]interface{}) gin
 }
 
 func (self *Server) Init() {
-	self.router.GET("/api/shorten/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		url := c.DefaultQuery("url", "")
-		err := self.api.SetLink(id, url)
-		if err != nil {
-			if err == shortlink.ErrAlreadyExists {
-				c.JSON(200, makeJsonResponse(
-					1,
-					"Error Id already used",
-					gin.H{},
-				))
-			} else if err == shortlink.ErrIllegalParameters {
-				c.JSON(400, makeJsonResponse(
-					-1,
-					"Error Illegal Parameters",
-					gin.H{},
-				))
-			} else {
-				c.JSON(500, makeJsonResponse(
-					500,
-					"Unknown Error Please Contact With Administrator",
-					gin.H{},
-				))
+	self.router.POST("/api/shorten/:id", func(c *gin.Context) {
+		capres := self.captcha.GinVerify(c)
+		if capres {
+			id := c.Param("id")
+			url := c.DefaultPostForm("url", "")
+			err := self.api.SetLink(id, url)
+			if err != nil {
+				if err == shortlink.ErrAlreadyExists {
+					c.JSON(200, makeJsonResponse(
+						1,
+						"Error Id already used",
+						gin.H{},
+					))
+				} else if err == shortlink.ErrIllegalParameters {
+					c.JSON(200, makeJsonResponse(
+						-1,
+						"Error Illegal Parameters",
+						gin.H{},
+					))
+				} else {
+					c.JSON(500, makeJsonResponse(
+						500,
+						"Unknown Error Please Contact With Administrator",
+						gin.H{},
+					))
+				}
+				return
 			}
-			return
+			c.JSON(200, makeJsonResponse(
+				0,
+				"OK",
+				gin.H{},
+			))
+		} else {
+			c.JSON(200, makeJsonResponse(
+				-1,
+				"Captcha Verify Failed",
+				gin.H{},
+			))
 		}
-		c.JSON(200, makeJsonResponse(
-			0,
-			"OK",
-			gin.H{},
-		))
+
 	})
 
 	self.router.GET("/api/short/:id/exist", func(c *gin.Context) {
@@ -73,7 +84,7 @@ func (self *Server) Init() {
 		exist, err := self.api.IsLinkExist(id)
 		if err != nil {
 			if err == shortlink.ErrIllegalParameters {
-				c.JSON(400, makeJsonResponse(
+				c.JSON(200, makeJsonResponse(
 					-1,
 					"Error Illegal Parameters",
 					gin.H{},
@@ -99,7 +110,7 @@ func (self *Server) Init() {
 		url, err := self.api.GetLink(id)
 		if err != nil {
 			if err == shortlink.ErrIllegalParameters {
-				c.JSON(400, makeJsonResponse(
+				c.JSON(200, makeJsonResponse(
 					-1,
 					"Error Illegal Parameters",
 					gin.H{},
@@ -127,8 +138,6 @@ func (self *Server) Init() {
 	})
 
 	self.InitPages()
-	self.router.GET("/geetest/register", self.captcha.FirstRegister)
-	self.router.POST("/geetest/validate", self.captcha.SecondValidate)
 }
 
 func (self *Server) InitPages() {
@@ -163,5 +172,5 @@ func (self *Server) InitPages() {
 
 func (self *Server) Run() {
 	gin.SetMode(gin.ReleaseMode)
-	self.router.Run(":8080")
+	self.router.Run(":8081")
 }

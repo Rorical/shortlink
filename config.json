@@ -1,5 +1,8 @@
 {
     "LevelGo":{
         "URI": "localhost:8192"
+    },
+    "HCaptcha": {
+        "SecretKey": "0x0000000000000000000000000000000000000000"
     }
 }

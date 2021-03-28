@@ -11,14 +11,13 @@ type LevelGoSetting struct {
 	URI string
 }
 
-type GeetestSetting struct {
-	GEETEST_ID  string
-	GEETEST_KEY string
+type hCaptchaSetting struct {
+	SecretKey string
 }
 
 type Setting struct {
-	LevelGo LevelGoSetting
-	Geetest GeetestSetting
+	LevelGo  LevelGoSetting
+	HCaptcha hCaptchaSetting
 }
 
 func Read() *Setting {
