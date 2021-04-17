@@ -15,9 +15,14 @@ type hCaptchaSetting struct {
 	SecretKey string
 }
 
+type ServerSetting struct {
+	Port string
+}
+
 type Setting struct {
 	LevelGo  LevelGoSetting
 	HCaptcha hCaptchaSetting
+	Server   ServerSetting
 }
 
 func Read() *Setting {

@@ -13,6 +13,7 @@ type Server struct {
 	router  *gin.Engine
 	api     *shortlink.ShortLinkApi
 	captcha *hcaptcha.HCaptcha
+	port    string
 }
 
 func NewServer() *Server {
@@ -24,6 +25,7 @@ func NewServer() *Server {
 		router:  router,
 		api:     api,
 		captcha: hcaptcha,
+		port:    conf.Server.Port,
 	}
 }
 
@@ -172,5 +174,5 @@ func (self *Server) InitPages() {
 
 func (self *Server) Run() {
 	gin.SetMode(gin.ReleaseMode)
-	self.router.Run(":8081")
+	self.router.Run(":" + self.port)
 }
